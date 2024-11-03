@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/fetch-feeds.js"
+    "start": "tsc && node dist/fetch-feeds.js",
+    "feedbin": "tsc && node dist/feedbin_fetch.js"
   },
   "keywords": [],
   "author": "",
