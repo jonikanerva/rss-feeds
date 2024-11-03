@@ -1,16 +1,9 @@
-import * as fs from "fs";
-import * as xml2js from "xml2js";
-import Parser from "rss-parser";
-import { JSDOM } from 'jsdom';
-import { chromium } from "playwright";
-import { Readability } from "@mozilla/readability";
 import { format, subDays } from "date-fns";
-
-declare global {
-  interface Window {
-    Readability: typeof Readability;
-  }
-}
+import * as fs from "fs";
+import { JSDOM } from "jsdom";
+import { Browser, chromium } from "playwright";
+import Parser from "rss-parser";
+import { Readability } from "@mozilla/readability";
 
 interface Article {
   title?: string;
@@ -21,33 +14,47 @@ interface Article {
   article?: string;
 }
 
-async function fetchRecentArticles(opmlFile: string, outputFile: string) {
+const rssFeeds = [
+  "https://blog.eu.playstation.com/feed/",
+  "https://blog.us.playstation.com/feed/",
+  "https://www.polygon.com/rss/index.xml",
+  "https://insider-gaming.com/feed/",
+  "https://kotaku.com/rss",
+  "https://mobilegamer.biz/feed/",
+  "https://muropaketti.com/feed/",
+  "https://neogames.fi/fi/feed/",
+  "https://news.xbox.com/feed/stories/",
+  "https://techcrunch.com/feed/",
+  "https://venturebeat.com/category/games/feed/",
+  "https://www.eurogamer.net/feed",
+  "https://www.gamesindustry.biz/feed/data",
+  "https://www.gamesindustry.biz/feed/tag/topics/financials",
+  "https://www.gamesindustry.biz/rss/gamesindustry_news_feed.rss",
+  "https://www.gamesradar.com/feeds/articletype/news/",
+  "https://www.theverge.com/rss/index.xml",
+];
+
+async function fetchRecentArticles(outputFile: string) {
   try {
     const browser = await chromium.launch();
-
-    const opmlContent = fs.readFileSync(opmlFile, "utf-8");
-    const parser = new xml2js.Parser();
-    const opml = await parser.parseStringPromise(opmlContent);
-    const outlines = opml.opml.body[0].outline;
 
     const allArticles: Article[] = [];
     const aWeekAgo = subDays(new Date(), 7);
 
-    for (const outline of outlines) {
-      if (outline.outline) {
-        for (const subOutline of outline.outline) {
-          await processFeed(subOutline, allArticles, aWeekAgo, browser);
-        }
-      } else {
-        await processFeed(outline, allArticles, aWeekAgo, browser);
-      }
+    for (const url of rssFeeds) {
+      await processFeed(url, allArticles, aWeekAgo, browser);
     }
 
     await browser.close();
 
-    const jsonContent = JSON.stringify(allArticles, null, 2);
+    const jsonContent = JSON.stringify(
+      allArticles.filter((article) => article.article !== undefined),
+      null,
+      2
+    );
     fs.writeFileSync(outputFile, jsonContent, "utf-8");
     console.log(`Artikkelit tallennettu tiedostoon: ${outputFile}`);
+
     process.exit(0);
   } catch (error) {
     console.error("Virhe:", error);
@@ -57,10 +64,13 @@ async function fetchRecentArticles(opmlFile: string, outputFile: string) {
 
 async function fetchArticleContent(
   url: string | undefined,
-  browser: any,
+  browser: Browser,
   date: string
 ): Promise<string | undefined> {
-  console.log(`Haetaan artikkeli (${date.substring(0,10)}): ${url}`);
+  console.log(`Haetaan artikkeli (${date.substring(0, 10)}): ${url}`);
+  if (!url) {
+    return undefined;
+  }
 
   try {
     const context = await browser.newContext();
@@ -76,9 +86,8 @@ async function fetchArticleContent(
     const article = reader.parse() || undefined;
     await context.close();
 
-    console.log('Ok!')
+    console.log("Ok!");
     return article?.textContent;
-
   } catch (error: any) {
     console.error(`Error: ${error.message}`);
     return undefined;
@@ -88,7 +97,7 @@ async function fetchArticleContent(
 const callInSequence = async <T>(
   list: T[],
   concurrency: number,
-  fnc: (arg: T) => Promise<any>,
+  fnc: (arg: T) => Promise<any>
 ) => {
   const queue = [...list];
   const promises: Promise<void>[] = [];
@@ -110,48 +119,50 @@ const callInSequence = async <T>(
 };
 
 async function processFeed(
-  outline: any,
+  url: string,
   allArticles: Article[],
   aWeekAgo: Date,
-  browser: any
+  browser: Browser
 ) {
-  if (outline.$.xmlUrl) {
-    try {
-      let parser = new Parser();
-      let feed = await parser.parseURL(outline.$.xmlUrl);
+  try {
+    let parser = new Parser();
+    let feed = await parser.parseURL(url);
 
-      const recentItems = feed.items.filter((item: any) => {
-        const publishedDate = item.pubDate || item.isoDate;
-        return publishedDate ? new Date(publishedDate) >= aWeekAgo : false;
+    const recentItems = feed.items.filter((item: any) => {
+      const publishedDate = item.pubDate || item.isoDate;
+      return publishedDate ? new Date(publishedDate) >= aWeekAgo : false;
+    });
+
+    await callInSequence(recentItems, 10, async (item) => {
+      const publishedDate =
+        item.pubDate || item.isoDate || new Date().toISOString();
+      const articleDate = new Date(publishedDate);
+      const articleContent = await fetchArticleContent(
+        item.link,
+        browser,
+        publishedDate
+      );
+
+      allArticles.push({
+        title: item.title,
+        link: item.link,
+        published: format(articleDate, "yyyy-MM-dd HH:mm:ss"),
+        summary: item.contentSnippet,
+        content: item.content,
+        article: articleContent,
       });
-
-      await callInSequence(recentItems, 10, async (item) => {
-        const publishedDate = item.pubDate || item.isoDate || new Date().toISOString();
-        const articleDate = new Date(publishedDate);
-        const articleContent = await fetchArticleContent(item.link, browser, publishedDate);
-
-        allArticles.push({
-          title: item.title,
-          link: item.link,
-          published: format(articleDate, "yyyy-MM-dd HH:mm:ss"),
-          summary: item.contentSnippet,
-          content: item.content,
-          article: articleContent,
-        });
-      });
-    } catch (error: any) {
-      console.error(`Virhe syötteestä ${outline.$.xmlUrl}: ${error.message}`);
-    }
+    });
+  } catch (error: any) {
+    console.error(`Virhe syötteestä ${url}: ${error.message}`);
   }
 }
 
 // Hae parametrit komentoriviltä
-const opmlFile = process.argv[2];
-const outputFile = process.argv[3];
+const outputFile = process.argv[2];
 
-if (!opmlFile || !outputFile) {
-  console.error("Käyttö: npm run start <opml-tiedosto> <json-tiedosto>");
+if (!outputFile) {
+  console.error("Käyttö: npm run start <output-json-tiedosto>");
   process.exit(1);
 }
 
-fetchRecentArticles(opmlFile, outputFile);
+fetchRecentArticles(outputFile);
