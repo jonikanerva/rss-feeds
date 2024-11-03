@@ -139,11 +139,6 @@ async function fetchEntryContent(
           );
           return { ...entry, extractedContent: response.content };
         } catch (error) {
-          console.error(
-            "artikkelin haku epäonnistui",
-            entry.extracted_content_url,
-            error
-          );
           return { ...entry, extractedContent: undefined };
         }
       })
@@ -170,18 +165,18 @@ async function main(): Promise<any> {
     const entries = await fetchEntries(taggedFeedIds);
     console.log("Haettiin artikkelit:", entries.length);
 
-    saveToFile("feedbin_articles.json", entries);
-
     const entriesWithContent = await fetchEntryContent(entries);
-    console.log("Haettiin contentti:", entriesWithContent.length);
-
-    saveToFile("feedbin_articles_with_content.json", entriesWithContent);
-
-    console.log(
-      "contentin haku epäonnistui: ",
-      entriesWithContent.filter((entry) => entry.extractedContent === undefined)
-        .length
+    const onlyWithContent = entriesWithContent.filter(
+      (entry) => entry.extractedContent !== undefined
     );
+
+    console.log("Haettiin contentti:", onlyWithContent.length);
+    console.log(
+      "Virheitä:",
+      entriesWithContent.length - onlyWithContent.length
+    );
+
+    saveToFile("feedbin_articles_with_content.json", onlyWithContent);
   } catch (error) {
     console.error("Virhe:", error);
   }
