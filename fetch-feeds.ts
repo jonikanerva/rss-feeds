@@ -15,15 +15,12 @@ interface Article {
 }
 
 const rssFeeds = [
-  "https://blog.eu.playstation.com/feed/",
-  "https://blog.us.playstation.com/feed/",
   "https://www.polygon.com/rss/index.xml",
   "https://insider-gaming.com/feed/",
   "https://kotaku.com/rss",
   "https://mobilegamer.biz/feed/",
   "https://muropaketti.com/feed/",
   "https://neogames.fi/fi/feed/",
-  "https://news.xbox.com/feed/stories/",
   "https://techcrunch.com/feed/",
   "https://venturebeat.com/category/games/feed/",
   "https://www.eurogamer.net/feed",
