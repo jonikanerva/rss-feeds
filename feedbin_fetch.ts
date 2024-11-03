@@ -1,6 +1,7 @@
 import axios from "axios";
 import { subDays } from "date-fns";
 import { htmlToText } from "html-to-text";
+import { Parser } from "json2csv";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 
@@ -160,27 +161,41 @@ function saveToFile(outputFile: string, data: any) {
   console.log(`Artikkelit tallennettu tiedostoon: ${outputFile}`);
 }
 
+function saveToCSV(outputFile: string, data: any) {
+  const fields = ["url", "published", "extractedContent"];
+  const opts = { fields };
+  try {
+    const parser = new Parser(opts);
+    const csv = parser.parse(data);
+    fs.writeFileSync(outputFile, csv, "utf-8");
+    console.log(`Artikkelit tallennettu CSV-tiedostoon: ${outputFile}`);
+  } catch (err) {
+    console.error("CSV-tiedoston tallennus epäonnistui:", err);
+  }
+}
+
 // Pääfunktio
 async function main(): Promise<any> {
   try {
     const tagNames = ["Games Industry"];
     const taggedFeedIds = await fetchTags(tagNames);
-    console.log("Löydettiin feed ID:t:", taggedFeedIds);
+    console.log("Löydettiin feedejä:", taggedFeedIds.length);
     const entries = await fetchEntries(taggedFeedIds);
-    console.log("Haettiin artikkelit:", entries.length);
+    console.log("Haettiin artikkeleita:", entries.length);
 
     const entriesWithContent = await fetchEntryContent(entries);
     const onlyWithContent = entriesWithContent.filter(
       (entry) => entry.extractedContent !== undefined
     );
 
-    console.log("Haettiin contentti:", onlyWithContent.length);
+    console.log("Haettiin contenttia artikkeleihin:", onlyWithContent.length);
     console.log(
-      "Virheitä:",
+      "Epäonnistuneita contenttihakuja:",
       entriesWithContent.length - onlyWithContent.length
     );
 
-    saveToFile("feedbin_articles_with_content.json", onlyWithContent);
+    saveToCSV("feedbin_articles.csv", onlyWithContent);
+    saveToFile("feedbin_articles.json", onlyWithContent);
   } catch (error) {
     console.error("Virhe:", error);
   }
