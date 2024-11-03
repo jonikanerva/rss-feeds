@@ -1,3 +1,5 @@
 dist
 node_modules
 .env
+feedbin_articles.json
+feedbin_articles.csv
