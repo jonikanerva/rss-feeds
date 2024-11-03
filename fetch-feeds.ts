@@ -6,12 +6,10 @@ import Parser from "rss-parser";
 import { Readability } from "@mozilla/readability";
 
 interface Article {
-  title?: string;
-  link?: string;
-  published?: string;
-  summary?: string;
-  content?: string;
-  article?: string;
+  articleTitle?: string;
+  articleUrl?: string;
+  articleDate?: string;
+  articleContent?: string;
 }
 
 const rssFeeds = [
@@ -19,8 +17,6 @@ const rssFeeds = [
   "https://insider-gaming.com/feed/",
   "https://kotaku.com/rss",
   "https://mobilegamer.biz/feed/",
-  "https://muropaketti.com/feed/",
-  "https://neogames.fi/fi/feed/",
   "https://techcrunch.com/feed/",
   "https://venturebeat.com/category/games/feed/",
   "https://www.eurogamer.net/feed",
@@ -45,7 +41,7 @@ async function fetchRecentArticles(outputFile: string) {
     await browser.close();
 
     const jsonContent = JSON.stringify(
-      allArticles.filter((article) => article.article !== undefined),
+      allArticles.filter((article) => article.articleContent !== undefined),
       null,
       2
     );
@@ -131,22 +127,22 @@ async function processFeed(
     });
 
     await callInSequence(recentItems, 10, async (item) => {
-      const publishedDate =
-        item.pubDate || item.isoDate || new Date().toISOString();
-      const articleDate = new Date(publishedDate);
+      const articleDate = format(
+        new Date(item.pubDate || item.isoDate || Date.now()),
+        "yyyy-MM-dd HH:mm:ss"
+      );
+
       const articleContent = await fetchArticleContent(
         item.link,
         browser,
-        publishedDate
+        articleDate
       );
 
       allArticles.push({
-        title: item.title,
-        link: item.link,
-        published: format(articleDate, "yyyy-MM-dd HH:mm:ss"),
-        summary: item.contentSnippet,
-        content: item.content,
-        article: articleContent,
+        articleTitle: item.title,
+        articleUrl: item.link,
+        articleDate: articleDate,
+        articleContent: articleContent,
       });
     });
   } catch (error: any) {
