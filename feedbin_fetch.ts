@@ -1,5 +1,6 @@
 import axios from "axios";
 import { subDays } from "date-fns";
+import { htmlToText } from "html-to-text";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 
@@ -137,7 +138,10 @@ async function fetchEntryContent(
           const response = await fetchFeedbinUrl<FeedbinExtractedContent>(
             entry.extracted_content_url
           );
-          return { ...entry, extractedContent: response.content };
+          const text = htmlToText(response.content, {
+            wordwrap: false,
+          }).replace(/\n/g, " ");
+          return { ...entry, extractedContent: text };
         } catch (error) {
           return { ...entry, extractedContent: undefined };
         }
