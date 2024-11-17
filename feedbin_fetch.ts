@@ -123,6 +123,9 @@ async function fetchEntries(feedIds: number[]): Promise<FeedbinEntry[]> {
       }
     );
 
+    console.log("Cutoff date:", weekAgo);
+    console.log("Haettiin feedbinin artikkeleita:", response.length);
+
     return response.filter((entry) => feedIds.includes(entry.feed_id));
   } catch (error) {
     throw error;
@@ -188,7 +191,7 @@ async function main(): Promise<any> {
       (entry) => entry.extractedContent !== undefined
     );
 
-    console.log("Haettiin contenttia artikkeleihin:", onlyWithContent.length);
+    console.log("Löydettiin contenttia artikkeleihin:", onlyWithContent.length);
     console.log(
       "Epäonnistuneita contenttihakuja:",
       entriesWithContent.length - onlyWithContent.length
