@@ -119,7 +119,7 @@ async function fetchEntries(feedIds: number[]): Promise<FeedbinEntry[]> {
       "https://api.feedbin.com/v2/entries.json",
       {
         since: weekAgo,
-        per_page: 5000,
+        per_page: 10_000,
       }
     );
 
