@@ -4,21 +4,24 @@
   "description": "",
   "main": "dist/feedbin_fetch.js",
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/feedbin_fetch.js",
     "feedbin": "tsc && node dist/feedbin_fetch.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.7.7",
+    "axios": "^1.11.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.2.1",
     "html-to-text": "^9.0.5",
     "json2csv": "^6.0.0-alpha.2"
   },
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",
     "@types/json2csv": "^5.0.7",
-    "typescript": "^5.6.3"
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.2"
   }
 }
