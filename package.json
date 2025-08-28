@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/feedbin_fetch.js",
-    "feedbin": "tsc && node dist/feedbin_fetch.js"
+    "feedbin": "tsc && node dist/feedbin_fetch.js",
+    "summarize": "tsc && node dist/feedbin_summarize.js"
   },
   "keywords": [],
   "author": "",
@@ -14,9 +15,9 @@
   "dependencies": {
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.1",
     "html-to-text": "^9.0.5",
-    "json2csv": "^6.0.0-alpha.2"
+    "json2csv": "^6.0.0-alpha.2",
+    "openai": "^5.16.0"
   },
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",

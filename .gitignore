@@ -3,4 +3,5 @@ node_modules
 .env
 feedbin_articles.json
 feedbin_articles.csv
+feedbin_summary.md
 .yarn/*
