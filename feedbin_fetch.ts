@@ -2,10 +2,9 @@ import axios from "axios";
 import { subDays } from "date-fns";
 import { htmlToText } from "html-to-text";
 import { Parser } from "json2csv";
-import * as dotenv from "dotenv";
 import * as fs from "fs";
 
-dotenv.config();
+process.loadEnvFile();
 
 if (!process.env.FEEDBIN_USERNAME || !process.env.FEEDBIN_PASSWORD) {
   throw new Error(
