@@ -5,7 +5,6 @@
   "main": "dist/feedbin_fetch.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/feedbin_fetch.js",
     "feedbin": "tsc && node dist/feedbin_fetch.js",
     "summarize": "tsc && node dist/feedbin_summarize.js"
   },
