@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",
     "@types/json2csv": "^5.0.7",
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "typescript": "^5.9.2"
   }
 }
