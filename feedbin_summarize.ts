@@ -136,17 +136,6 @@ const FACTS_SCHEMA_OBJECT = {
   },
 } as const;
 
-// Narrowed structural type for Responses API we rely on
-type ResponsesCreateResult = {
-  output_text?: string;
-  output?: Array<{
-    text?: string | { value?: string };
-    content?: Array<
-      string | { text?: string | { value?: string }; content?: string }
-    >;
-  }>;
-};
-
 type ResponsesInputMessage = {
   role: "system" | "user" | "assistant";
   content: Array<{ type: "input_text"; text: string }>;
@@ -204,41 +193,6 @@ async function callResponsesFacts(
     );
   }
   throw new Error("OpenAI: empty response (responses)");
-}
-
-function safeStringify(obj: unknown): string {
-  const seen = new WeakSet();
-  try {
-    return JSON.stringify(
-      obj,
-      (key, value) => {
-        if (typeof value === "object" && value !== null) {
-          if (seen.has(value as object)) return "[Circular]";
-          seen.add(value as object);
-        }
-        return value;
-      },
-      2
-    );
-  } catch {
-    try {
-      const fallback: any = {};
-      if (obj && typeof obj === "object") {
-        for (const k of Object.keys(obj as any)) {
-          const v = (obj as any)[k];
-          if (
-            typeof v === "string" ||
-            typeof v === "number" ||
-            typeof v === "boolean"
-          )
-            fallback[k] = v;
-        }
-      }
-      return JSON.stringify(fallback, null, 2);
-    } catch {
-      return "{}";
-    }
-  }
 }
 
 async function callOpenAIFacts(messages: ChatMessage[]): Promise<string> {
